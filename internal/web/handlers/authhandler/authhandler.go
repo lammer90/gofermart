@@ -2,6 +2,7 @@ package authhandler
 
 import (
 	"encoding/json"
+	"github.com/lammer90/gofermart/internal/dto/auth"
 	"github.com/lammer90/gofermart/internal/services/authservice"
 	"net/http"
 )
@@ -17,7 +18,7 @@ func New(authenticationService authservice.AuthenticationService) Authentication
 }
 
 func (a authenticationHandler) Register(res http.ResponseWriter, req *http.Request) {
-	var request AuthRequest
+	var request auth.AuthRequest
 	dec := json.NewDecoder(req.Body)
 	err := dec.Decode(&request)
 	if err != nil || request.Login == "" || request.Password == "" {
@@ -44,7 +45,7 @@ func (a authenticationHandler) Register(res http.ResponseWriter, req *http.Reque
 }
 
 func (a authenticationHandler) Login(res http.ResponseWriter, req *http.Request) {
-	var request AuthRequest
+	var request auth.AuthRequest
 	dec := json.NewDecoder(req.Body)
 	err := dec.Decode(&request)
 	if err != nil || request.Login == "" || request.Password == "" {

@@ -6,9 +6,9 @@ import (
 )
 
 type AuthenticationService interface {
-	CheckAuthentication(token string) (err error)
-	ToRegisterUser(login, password string) (token string, err error)
-	ToLoginUser(login, password string) (token string, err error)
+	CheckAuthentication(token string) (string, error)
+	ToRegisterUser(login, password string) (string, error)
+	ToLoginUser(login, password string) (string, error)
 }
 
 type Claims struct {

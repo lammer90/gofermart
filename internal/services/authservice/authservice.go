@@ -15,19 +15,19 @@ func New(userRepository userstorage.UserRepository, privateKey string) Authentic
 	return &authenticationServiceImpl{userRepository: userRepository, privateKey: privateKey}
 }
 
-func (a *authenticationServiceImpl) CheckAuthentication(tokenString string) (err error) {
+func (a *authenticationServiceImpl) CheckAuthentication(tokenString string) (string, error) {
 	claims := &Claims{}
 	token, err := jwt.ParseWithClaims(tokenString, claims,
 		func(t *jwt.Token) (interface{}, error) {
 			return []byte(a.privateKey), nil
 		})
 	if err != nil {
-		return NotAuthorized
+		return "", NotAuthorized
 	}
 	if !token.Valid || claims.Login == "" {
-		return NotAuthorized
+		return "", NotAuthorized
 	}
-	return nil
+	return claims.Login, nil
 }
 
 func (a *authenticationServiceImpl) ToRegisterUser(login, password string) (token string, err error) {
