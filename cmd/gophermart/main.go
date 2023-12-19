@@ -61,6 +61,6 @@ func InitDB(driverName, dataSource string) *sql.DB {
 }
 
 func buildSession() *sessions.CookieStore {
-	key := []byte("super-secret-key")
+	key := []byte("abc123")
 	return sessions.NewCookieStore(key)
 }

@@ -57,7 +57,7 @@ func (o orderHandler) FindAll(res http.ResponseWriter, req *http.Request) {
 		res.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-	if len(orders) == 0 {
+	if orders == nil || len(orders) == 0 {
 		res.WriteHeader(http.StatusNoContent)
 		return
 	}

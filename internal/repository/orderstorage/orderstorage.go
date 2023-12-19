@@ -3,6 +3,7 @@ package orderstorage
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"github.com/lammer90/gofermart/internal/dto/order"
 )
 
@@ -38,6 +39,9 @@ func (d dbOrderStorage) FindByUser(login string) ([]order.Order, error) {
             o.login = $1
     `, login)
 
+	if err != nil && errors.Is(err, sql.ErrNoRows) {
+		return nil, nil
+	}
 	if err != nil {
 		return nil, err
 	}
@@ -70,6 +74,9 @@ func (d dbOrderStorage) FindByNumber(number string) (*order.Order, error) {
         WHERE
             o.order_number = $1
     `, number)
+	if err != nil && errors.Is(err, sql.ErrNoRows) {
+		return nil, nil
+	}
 	if err != nil {
 		return nil, err
 	}

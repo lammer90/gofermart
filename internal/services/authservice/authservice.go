@@ -2,6 +2,7 @@ package authservice
 
 import (
 	"crypto/sha256"
+	"encoding/base64"
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/lammer90/gofermart/internal/repository/userstorage"
 )
@@ -76,7 +77,7 @@ func (a *authenticationServiceImpl) ToLoginUser(login, password string) (token s
 func buildHash(login string, password string) string {
 	src := []byte(login + ":" + password)
 	newHashByte := sha256.Sum256(src)
-	return string(newHashByte[:])
+	return base64.StdEncoding.EncodeToString(newHashByte[:])
 }
 
 func buildJWTString(login, privateKey string) (string, error) {

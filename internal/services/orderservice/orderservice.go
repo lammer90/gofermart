@@ -54,6 +54,9 @@ func (o orderServiceImpl) FindAll(login string) ([]order.OrderResponse, error) {
 	if err != nil {
 		return nil, err
 	}
+	if orders == nil {
+		return nil, nil
+	}
 	for _, ord := range orders {
 		resp := order.OrderResponse{
 			ord.Number,

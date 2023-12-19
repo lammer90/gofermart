@@ -3,6 +3,7 @@ package userstorage
 import (
 	"context"
 	"database/sql"
+	"errors"
 )
 
 type dbUserStorage struct {
@@ -35,7 +36,7 @@ func (d *dbUserStorage) Find(login string) (string, error) {
 
 	var authHash string
 	err := row.Scan(&authHash)
-	if err != nil {
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		return "", err
 	}
 	return authHash, nil

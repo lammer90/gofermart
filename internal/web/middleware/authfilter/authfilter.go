@@ -35,14 +35,8 @@ func New(authenticationService authservice.AuthenticationService, cookieStore *s
 					return
 				}
 
-				session, err := cookieStore.Get(r, "Authorization")
-				if err != nil {
-					logger.Log.Error("Error get session", zap.Error(err))
-					w.WriteHeader(http.StatusInternalServerError)
-					return
-				}
+				session, _ := cookieStore.Get(r, "Authorization")
 				session.Values["login"] = login
-				session.Save(r, w)
 			}
 
 			next.ServeHTTP(w, r)
