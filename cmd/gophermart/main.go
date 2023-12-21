@@ -9,6 +9,7 @@ import (
 	"github.com/lammer90/gofermart/internal/logger"
 	"github.com/lammer90/gofermart/internal/repository/orderstorage"
 	"github.com/lammer90/gofermart/internal/repository/userstorage"
+	"github.com/lammer90/gofermart/internal/services/accrualservice"
 	"github.com/lammer90/gofermart/internal/services/authservice"
 	"github.com/lammer90/gofermart/internal/services/orderservice"
 	"github.com/lammer90/gofermart/internal/web/handlers/authhandler"
@@ -32,6 +33,8 @@ func main() {
 
 	orderSrv := orderservice.New(orderstorage.New(db))
 	orderHdl := orderhandler.New(orderSrv, cookieStore)
+
+	go accrualservice.New(orderSrv, config.AccrualAddress).Start()
 
 	http.ListenAndServe(config.ServAddress, shortenerRouter(authHdl, orderHdl, authMdl))
 }

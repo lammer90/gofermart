@@ -67,3 +67,26 @@ func (o orderServiceImpl) FindAll(login string) ([]order.OrderResponse, error) {
 	}
 	return response, nil
 }
+
+func (o orderServiceImpl) FindAllToProcess() ([]string, error) {
+	return o.repository.FindNumbersToProcess()
+}
+
+func (o orderServiceImpl) UpdateAccrual(number string, status string, accrual float32) error {
+	var orderStatus order.Status
+	switch status {
+	case "REGISTERED":
+		orderStatus = order.PROCESSING
+	case "INVALID":
+		orderStatus = order.INVALID
+	case "PROCESSING":
+		orderStatus = order.PROCESSING
+	case "PROCESSED":
+		orderStatus = order.PROCESSED
+	default:
+		return nil
+	}
+
+	orderToUpdate := &order.Order{Number: number, Status: orderStatus, Accrual: accrual}
+	return o.repository.Update(orderToUpdate)
+}

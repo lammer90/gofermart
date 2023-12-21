@@ -8,6 +8,8 @@ import (
 type OrderService interface {
 	Save(number, login string) error
 	FindAll(login string) ([]order.OrderResponse, error)
+	FindAllToProcess() ([]string, error)
+	UpdateAccrual(number string, status string, accrual float32) error
 }
 
 var OrderNumberAlreadyExistThisUser = errors.New("order number already exist this user")
