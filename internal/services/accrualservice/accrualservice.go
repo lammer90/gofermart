@@ -27,20 +27,20 @@ func (a accrualScheduledServiceImpl) Start() {
 			logger.Log.Error("Error during get orders to process", zap.Error(err))
 			continue
 		}
-		for _, number := range numbers {
-			response, err := http.Get(a.accrualAddress + "/api/orders/" + number)
+		for _, o := range numbers {
+			response, err := http.Get(a.accrualAddress + "/api/orders/" + o.Number)
 			if err != nil {
-				logger.Log.Error("Error during get accrual by number "+number, zap.Error(err))
+				logger.Log.Error("Error during get accrual by number "+o.Number, zap.Error(err))
 				continue
 			}
 			var accrualResponse AccrualResponse
 			dec := json.NewDecoder(response.Body)
 			err = dec.Decode(&accrualResponse)
 			if err != nil {
-				logger.Log.Error("Error during get accrual by number "+number, zap.Error(err))
+				logger.Log.Error("Error during get accrual by number "+o.Number, zap.Error(err))
 				continue
 			}
-			a.orderService.UpdateAccrual(number, accrualResponse.Status, accrualResponse.Accrual)
+			a.orderService.UpdateAccrual(o.Login, o.Number, accrualResponse.Status, accrualResponse.Accrual)
 		}
 	}
 }

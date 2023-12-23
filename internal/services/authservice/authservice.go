@@ -4,16 +4,18 @@ import (
 	"crypto/sha256"
 	"encoding/base64"
 	"github.com/golang-jwt/jwt/v4"
+	"github.com/lammer90/gofermart/internal/repository/balance"
 	"github.com/lammer90/gofermart/internal/repository/userstorage"
 )
 
 type authenticationServiceImpl struct {
-	userRepository userstorage.UserRepository
-	privateKey     string
+	userRepository    userstorage.UserRepository
+	balanceRepository balance.BalanceRepository
+	privateKey        string
 }
 
-func New(userRepository userstorage.UserRepository, privateKey string) AuthenticationService {
-	return &authenticationServiceImpl{userRepository: userRepository, privateKey: privateKey}
+func New(userRepository userstorage.UserRepository, balanceRepository balance.BalanceRepository, privateKey string) AuthenticationService {
+	return &authenticationServiceImpl{userRepository: userRepository, balanceRepository: balanceRepository, privateKey: privateKey}
 }
 
 func (a *authenticationServiceImpl) CheckAuthentication(tokenString string) (string, error) {
@@ -41,6 +43,10 @@ func (a *authenticationServiceImpl) ToRegisterUser(login, password string) (toke
 	}
 
 	newHash := buildHash(login, password)
+	err = a.balanceRepository.CreateBalance(login)
+	if err != nil {
+		return "", err
+	}
 	err = a.userRepository.Save(login, newHash)
 	if err != nil {
 		return "", err

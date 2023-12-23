@@ -19,7 +19,7 @@ func initFlags() {
 	flag.StringVar(&ServAddress, "a", ":8080", "Request URL")
 	flag.StringVar(&DataSource, "d", "postgresql://localhost:5432/plotnikov?user=postgres&password=1234", "DataSource path")
 	flag.StringVar(&PrivateKey, "p", "privateKey", "PrivateKey for jwt auth")
-	flag.StringVar(&AccrualAddress, "r", "http://localhost:8081/", "Accrual address")
+	flag.StringVar(&AccrualAddress, "r", "http://localhost:8081", "Accrual address")
 	flag.Parse()
 }
 

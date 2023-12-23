@@ -66,7 +66,7 @@ func (o orderHandler) FindAll(res http.ResponseWriter, req *http.Request) {
 	res.WriteHeader(http.StatusOK)
 	enc := json.NewEncoder(res)
 	if err := enc.Encode(orders); err != nil {
-		res.WriteHeader(http.StatusBadRequest)
+		res.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 }

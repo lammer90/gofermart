@@ -37,6 +37,7 @@ func (d dbOrderStorage) FindByUser(login string) ([]order.Order, error) {
         FROM orders o
         WHERE
             o.login = $1
+        ORDER BY o.uploaded_at
     `, login)
 
 	if err != nil && errors.Is(err, sql.ErrNoRows) {
@@ -95,13 +96,9 @@ func (d dbOrderStorage) FindByNumber(number string) (*order.Order, error) {
 	return &o, nil
 }
 
-func (d dbOrderStorage) FindNumbersToProcess() ([]string, error) {
+func (d dbOrderStorage) FindNumbersToProcess() ([]order.Order, error) {
 	rows, err := d.db.QueryContext(context.Background(), `
-        SELECT
-            o.order_number,
-        FROM orders o
-        WHERE
-            o.status in (1,2)`)
+        SELECT o.order_number, o.login, o.status, o.accrual, o.uploaded_at FROM orders o WHERE o.status in (1,2)`)
 	if err != nil && errors.Is(err, sql.ErrNoRows) {
 		return nil, nil
 	}
@@ -109,14 +106,14 @@ func (d dbOrderStorage) FindNumbersToProcess() ([]string, error) {
 		return nil, err
 	}
 
-	result := make([]string, 0)
+	result := make([]order.Order, 0)
 	for rows.Next() {
-		var s string
-		err = rows.Scan(&s)
+		var o order.Order
+		err = rows.Scan(&o.Number, &o.Login, &o.Status, &o.Accrual, &o.UploadedAt)
 		if err != nil {
 			return nil, err
 		}
-		result = append(result, s)
+		result = append(result, o)
 	}
 	err = rows.Err()
 	if err != nil {
@@ -127,9 +124,7 @@ func (d dbOrderStorage) FindNumbersToProcess() ([]string, error) {
 
 func (d dbOrderStorage) Update(order *order.Order) error {
 	_, err := d.db.ExecContext(context.Background(), `
-        UPDATE orders SET (status, accrual)
-        VALUES ($1, $2) 
-        WHERE order_number = $3;
+        UPDATE orders SET status = $1, accrual = $2 WHERE order_number = $3;
     `, order.Status, order.Accrual, order.Number)
 	return err
 }

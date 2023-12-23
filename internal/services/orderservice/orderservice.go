@@ -1,21 +1,25 @@
 package orderservice
 
 import (
+	"database/sql"
 	"errors"
 	"github.com/EClaesson/go-luhn"
 	"github.com/jackc/pgerrcode"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/lammer90/gofermart/internal/dto/order"
+	"github.com/lammer90/gofermart/internal/repository/balance"
 	"github.com/lammer90/gofermart/internal/repository/orderstorage"
 	"time"
 )
 
 type orderServiceImpl struct {
-	repository orderstorage.OrderRepository
+	repository        orderstorage.OrderRepository
+	balanceRepository balance.BalanceRepository
+	db                *sql.DB
 }
 
-func New(repository orderstorage.OrderRepository) OrderService {
-	return &orderServiceImpl{repository: repository}
+func New(repository orderstorage.OrderRepository, balanceRepository balance.BalanceRepository, db *sql.DB) OrderService {
+	return &orderServiceImpl{repository: repository, balanceRepository: balanceRepository, db: db}
 }
 
 func (o orderServiceImpl) Save(number, login string) error {
@@ -68,11 +72,11 @@ func (o orderServiceImpl) FindAll(login string) ([]order.OrderResponse, error) {
 	return response, nil
 }
 
-func (o orderServiceImpl) FindAllToProcess() ([]string, error) {
+func (o orderServiceImpl) FindAllToProcess() ([]order.Order, error) {
 	return o.repository.FindNumbersToProcess()
 }
 
-func (o orderServiceImpl) UpdateAccrual(number string, status string, accrual float32) error {
+func (o orderServiceImpl) UpdateAccrual(login, number string, status string, accrual float32) error {
 	var orderStatus order.Status
 	switch status {
 	case "REGISTERED":
@@ -86,7 +90,23 @@ func (o orderServiceImpl) UpdateAccrual(number string, status string, accrual fl
 	default:
 		return nil
 	}
-
 	orderToUpdate := &order.Order{Number: number, Status: orderStatus, Accrual: accrual}
-	return o.repository.Update(orderToUpdate)
+
+	tx, err := o.db.Begin()
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+
+	err = o.repository.Update(orderToUpdate)
+	if err != nil {
+		return err
+	}
+	err = o.balanceRepository.AddBonus(login, accrual)
+	if err != nil {
+		return err
+	}
+
+	tx.Commit()
+	return nil
 }
