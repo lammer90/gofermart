@@ -28,22 +28,39 @@ func (d dbBalanceStorage) CreateBalance(login string) error {
 	return insErr
 }
 
-func (d dbBalanceStorage) AddBonus(login string, sumToAdd float32) error {
-	_, err := d.db.ExecContext(context.Background(), `
+func (d dbBalanceStorage) AddBonus(login string, sumToAdd float32, tx *sql.Tx) error {
+	var err error
+	if tx != nil {
+		_, err = tx.ExecContext(context.Background(), `
         UPDATE balance SET balance_sum = balance_sum + $1 WHERE login = $2
     `, sumToAdd, login)
+	} else {
+		_, err = d.db.ExecContext(context.Background(), `
+        UPDATE balance SET balance_sum = balance_sum + $1 WHERE login = $2
+    `, sumToAdd, login)
+	}
 	return err
 }
 
-func (d dbBalanceStorage) WithdrawBonus(login string, sumToMinus float32) error {
-	_, err := d.db.ExecContext(context.Background(), `
-        UPDATE balance SET balance_sum = balance_sum - $1, withdraw_sum + $2 WHERE login = $3
+func (d dbBalanceStorage) WithdrawBonus(login string, sumToMinus float32, tx *sql.Tx) error {
+	var err error
+	if tx != nil {
+		_, err = tx.ExecContext(context.Background(), `
+        UPDATE balance SET balance_sum = balance_sum - $1, withdraw_sum = withdraw_sum + $2 WHERE login = $3
     `, sumToMinus, sumToMinus, login)
+	} else {
+		_, err = d.db.ExecContext(context.Background(), `
+        UPDATE balance SET balance_sum = balance_sum - $1, withdraw_sum = withdraw_sum + $2 WHERE login = $3
+    `, sumToMinus, sumToMinus, login)
+	}
 	return err
 }
 
-func (d dbBalanceStorage) FindByUser(login string) (*Balance, error) {
-	rows, err := d.db.QueryContext(context.Background(), `
+func (d dbBalanceStorage) FindByUser(login string, tx *sql.Tx) (*Balance, error) {
+	var rows *sql.Rows
+	var err error
+	if tx != nil {
+		rows, err = tx.QueryContext(context.Background(), `
         SELECT
             b.login,
             b.balance_sum,
@@ -53,6 +70,17 @@ func (d dbBalanceStorage) FindByUser(login string) (*Balance, error) {
             b.login = $1
         FOR UPDATE
     `, login)
+	} else {
+		rows, err = d.db.QueryContext(context.Background(), `
+        SELECT
+            b.login,
+            b.balance_sum,
+            b.withdraw_sum
+        FROM balance b
+        WHERE
+            b.login = $1
+    `, login)
+	}
 
 	if err != nil {
 		return nil, err

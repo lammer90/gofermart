@@ -82,8 +82,10 @@ func (d dbOrderStorage) FindByNumber(number string) (*order.Order, error) {
 		return nil, err
 	}
 
+	var noRows = true
 	var o order.Order
 	for rows.Next() {
+		noRows = false
 		err = rows.Scan(&o.Number, &o.Login, &o.Status, &o.Accrual, &o.UploadedAt)
 		if err != nil {
 			return nil, err
@@ -92,6 +94,9 @@ func (d dbOrderStorage) FindByNumber(number string) (*order.Order, error) {
 	err = rows.Err()
 	if err != nil {
 		return nil, err
+	}
+	if noRows {
+		return nil, nil
 	}
 	return &o, nil
 }
@@ -122,10 +127,17 @@ func (d dbOrderStorage) FindNumbersToProcess() ([]order.Order, error) {
 	return result, nil
 }
 
-func (d dbOrderStorage) Update(order *order.Order) error {
-	_, err := d.db.ExecContext(context.Background(), `
+func (d dbOrderStorage) Update(order *order.Order, tx *sql.Tx) error {
+	var err error
+	if tx != nil {
+		_, err = tx.ExecContext(context.Background(), `
         UPDATE orders SET status = $1, accrual = $2 WHERE order_number = $3;
     `, order.Status, order.Accrual, order.Number)
+	} else {
+		_, err = d.db.ExecContext(context.Background(), `
+        UPDATE orders SET status = $1, accrual = $2 WHERE order_number = $3;
+    `, order.Status, order.Accrual, order.Number)
+	}
 	return err
 }
 

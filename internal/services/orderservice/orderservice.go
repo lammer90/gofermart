@@ -98,11 +98,11 @@ func (o orderServiceImpl) UpdateAccrual(login, number string, status string, acc
 	}
 	defer tx.Rollback()
 
-	err = o.repository.Update(orderToUpdate)
+	err = o.repository.Update(orderToUpdate, tx)
 	if err != nil {
 		return err
 	}
-	err = o.balanceRepository.AddBonus(login, accrual)
+	err = o.balanceRepository.AddBonus(login, accrual, tx)
 	if err != nil {
 		return err
 	}

@@ -31,7 +31,7 @@ func (w withdrawServiceImpl) Save(order, login string, sum float32) error {
 	}
 	defer tx.Rollback()
 
-	balanceSum, err := w.balanceRepository.FindByUser(login)
+	balanceSum, err := w.balanceRepository.FindByUser(login, tx)
 	if err != nil {
 		return err
 	}
@@ -39,11 +39,11 @@ func (w withdrawServiceImpl) Save(order, login string, sum float32) error {
 		return NotEnoughMoney
 	}
 	wit := &withdraw.Withdraw{Login: login, Order: order, Sum: sum, ProcessedAt: time.Now()}
-	err = w.withdrawRepository.Save(wit)
+	err = w.withdrawRepository.Save(wit, tx)
 	if err != nil {
 		return err
 	}
-	err = w.balanceRepository.WithdrawBonus(login, sum)
+	err = w.balanceRepository.WithdrawBonus(login, sum, tx)
 	if err != nil {
 		return err
 	}
@@ -74,7 +74,7 @@ func (w withdrawServiceImpl) FindAll(login string) ([]withdraw.WithdrawResponse,
 }
 
 func (w withdrawServiceImpl) FindBalance(login string) (*withdraw.BalanceResponse, error) {
-	balanceSum, err := w.balanceRepository.FindByUser(login)
+	balanceSum, err := w.balanceRepository.FindByUser(login, nil)
 	if err != nil {
 		return nil, err
 	}

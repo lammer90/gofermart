@@ -16,13 +16,23 @@ func New(db *sql.DB) WithdrawRepository {
 	return &dbWithdrawStorage{db: db}
 }
 
-func (d dbWithdrawStorage) Save(withdraw *withdraw.Withdraw) error {
-	_, err := d.db.ExecContext(context.Background(), `
+func (d dbWithdrawStorage) Save(withdraw *withdraw.Withdraw, tx *sql.Tx) error {
+	var err error
+	if tx != nil {
+		_, err = tx.ExecContext(context.Background(), `
         INSERT INTO withdraws
         (withdraw_order, login, withdraw_sum, processed_at)
         VALUES
         ($1, $2, $3, $4);
     `, withdraw.Order, withdraw.Login, withdraw.Sum, withdraw.ProcessedAt)
+	} else {
+		_, err = d.db.ExecContext(context.Background(), `
+        INSERT INTO withdraws
+        (withdraw_order, login, withdraw_sum, processed_at)
+        VALUES
+        ($1, $2, $3, $4);
+    `, withdraw.Order, withdraw.Login, withdraw.Sum, withdraw.ProcessedAt)
+	}
 	return err
 }
 
@@ -36,7 +46,7 @@ func (d dbWithdrawStorage) FindByUser(login string) ([]withdraw.Withdraw, error)
         FROM withdraws w
         WHERE
             w.login = $1
-        ORDER BY o.processed_at
+        ORDER BY w.processed_at
     `, login)
 
 	if err != nil && errors.Is(err, sql.ErrNoRows) {
